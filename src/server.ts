@@ -8,11 +8,8 @@ import express from 'express';
 import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
-const SITE_DETAILS_UPSTREAM_URL = `${process.env['SITE_DETAILS_UPSTREAM_URL']}/api/1/site/content_store/item.json?url=/site/website/index.xml`;
-
-if (!SITE_DETAILS_UPSTREAM_URL) {
-  throw new Error('Missing SITE_DETAILS_UPSTREAM_URL environment variable.');
-}
+const CONTENT_STORE_PATH = '/api/1/site/content_store/item.json?url=/site/website/index.xml';
+const upstreamBaseUrl = process.env['SITE_DETAILS_UPSTREAM_URL'];
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
@@ -29,8 +26,13 @@ const angularApp = new AngularNodeAppEngine();
  * ```
  */
 app.get('/api/site-details', async (_req, res, next) => {
+  if (!upstreamBaseUrl) {
+    res.status(500).send('Missing SITE_DETAILS_UPSTREAM_URL environment variable.');
+    return;
+  }
+
   try {
-    const upstreamResponse = await fetch(SITE_DETAILS_UPSTREAM_URL, {
+    const upstreamResponse = await fetch(`${upstreamBaseUrl}${CONTENT_STORE_PATH}`, {
       headers: {
         Accept: 'application/json',
       },
