@@ -1,0 +1,15 @@
+<section class="blogs" aria-labelledby="blogs-title">
+  <h1 id="blogs-title">Blogs</h1>
+  <p class="intro">Latest notes from our design, engineering, and delivery practice.</p>
+
+  <div class="cards">
+    @for (post of posts; track post.title) {
+      <article class="card" aria-label="Blog card">
+        <p class="meta">{{ post.category }} • {{ post.date }}</p>
+        <h2>{{ post.title }}</h2>
+        <p>{{ post.summary }}</p>
+        <a href="#" aria-label="Read more">Read more</a>
+      </article>
+    }
+  </div>
+</section>

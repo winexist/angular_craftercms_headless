@@ -1,0 +1,132 @@
+:host {
+  --ink-900: #121826;
+  --ink-700: #334155;
+  --ink-500: #64748b;
+  --line: #d9e2ec;
+  --surface: #f8fbff;
+  --brand: #0f766e;
+  --brand-soft: #ccfbf1;
+  --warm: #f59e0b;
+  font-family: 'Space Grotesk', 'Avenir Next', 'Segoe UI', sans-serif;
+  color: var(--ink-900);
+  min-height: 100dvh;
+  display: block;
+  background:
+    radial-gradient(circle at 10% 20%, #e0f2fe 0%, transparent 36%),
+    radial-gradient(circle at 85% 15%, #ecfccb 0%, transparent 28%),
+    linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.site-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.container {
+  width: min(1080px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(12px);
+  background: color-mix(in srgb, #ffffff 78%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+
+.header-inner {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand {
+  color: var(--ink-900);
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.brand-mark {
+  width: 1.9rem;
+  height: 1.9rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.55rem;
+  background: linear-gradient(130deg, #0b3d4a 0%, #0f766e 100%);
+  color: #f0fdfa;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.site-nav a {
+  color: var(--ink-700);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 999px;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.site-nav a:hover {
+  background: #edf2f7;
+  color: var(--ink-900);
+}
+
+.site-nav a.active {
+  background: var(--brand-soft);
+  color: #0f4f49;
+}
+
+.site-main {
+  width: min(1080px, calc(100% - 2rem));
+  padding-block: 2rem 3rem;
+}
+
+.site-footer {
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, #ffffff 90%, #e6f6ff);
+}
+
+.footer-inner {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  color: var(--ink-500);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 760px) {
+  .header-inner {
+    padding-block: 0.8rem;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .site-nav {
+    width: 100%;
+  }
+
+  .footer-inner {
+    padding-block: 0.8rem;
+  }
+}

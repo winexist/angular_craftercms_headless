@@ -12,6 +12,25 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+## SSR API Proxy Configuration
+
+The upstream API URL is server-side only and is configured through `SITE_DETAILS_UPSTREAM_URL`.
+
+1. Create local environment file from example:
+
+```bash
+cp .env.example .env
+```
+
+2. Build and run SSR with `.env` loaded automatically:
+
+```bash
+npm run build
+npm run serve:ssr:angular-ssr:env
+```
+
+If `SITE_DETAILS_UPSTREAM_URL` is missing, SSR startup fails fast with a clear error message.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:

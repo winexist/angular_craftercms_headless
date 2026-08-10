@@ -8,6 +8,11 @@ import express from 'express';
 import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
+const SITE_DETAILS_UPSTREAM_URL = `${process.env['SITE_DETAILS_UPSTREAM_URL']}/api/1/site/content_store/item.json?url=/site/website/index.xml`;
+
+if (!SITE_DETAILS_UPSTREAM_URL) {
+  throw new Error('Missing SITE_DETAILS_UPSTREAM_URL environment variable.');
+}
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
@@ -23,6 +28,31 @@ const angularApp = new AngularNodeAppEngine();
  * });
  * ```
  */
+app.get('/api/site-details', async (_req, res, next) => {
+  try {
+    const upstreamResponse = await fetch(SITE_DETAILS_UPSTREAM_URL, {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    const payload = await upstreamResponse.text();
+
+    if (!upstreamResponse.ok) {
+      res.status(upstreamResponse.status).send(payload);
+      return;
+    }
+
+    res.setHeader(
+      'content-type',
+      upstreamResponse.headers.get('content-type') ?? 'application/json;charset=UTF-8',
+    );
+    res.setHeader('cache-control', 'no-store');
+    res.status(200).send(payload);
+  } catch (error) {
+    next(error);
+  }
+});
 
 /**
  * Serve static files from /browser
@@ -41,9 +71,7 @@ app.use(
 app.use((req, res, next) => {
   angularApp
     .handle(req)
-    .then((response) =>
-      response ? writeResponseToNodeResponse(response, res) : next(),
-    )
+    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
     .catch(next);
 });
 

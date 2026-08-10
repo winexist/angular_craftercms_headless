@@ -1,0 +1,67 @@
+<section class="details" aria-labelledby="details-title">
+  <div class="heading-row">
+    <div>
+      <p class="eyebrow">Live API Content</p>
+      <h1 id="details-title">Site details</h1>
+      <p class="intro">
+        This page reads and displays selected fields from the provided API endpoint.
+      </p>
+    </div>
+    <button type="button" (click)="reload()">Reload</button>
+  </div>
+
+  @if (isLoading()) {
+    <p class="state">Loading content from API...</p>
+  } @else if (errorMessage()) {
+    <p class="state error">{{ errorMessage() }}</p>
+  } @else {
+    <div class="meta-grid" aria-label="API metadata">
+      <article>
+        <h2>File</h2>
+        <p>{{ pageName() }}</p>
+      </article>
+      <article>
+        <h2>URL</h2>
+        <p class="break">{{ pageUrl() }}</p>
+      </article>
+      <article>
+        <h2>Internal Name</h2>
+        <p>{{ internalName() }}</p>
+      </article>
+      <article>
+        <h2>Last Updated</h2>
+        <p>{{ lastUpdated() }}</p>
+      </article>
+      <article>
+        <h2>Carousel Items</h2>
+        <p>{{ carouselCount() }}</p>
+      </article>
+    </div>
+
+    <div class="list-grid">
+      <article>
+        <h2>Our Company Items</h2>
+        <ul>
+          @for (item of companyItems(); track item.title_s) {
+            <li>
+              <p class="item-title">{{ item.title_s || 'Untitled item' }}</p>
+              <p>{{ item.targetURL_s || 'No target URL' }}</p>
+            </li>
+          }
+        </ul>
+      </article>
+
+      <article>
+        <h2>Platform Items</h2>
+        <ul>
+          @for (item of platformItems(); track item.title_s) {
+            <li>
+              <p class="item-title">{{ item.title_s || 'Untitled platform' }}</p>
+              <p>{{ item.targetURL_s || 'No target URL' }}</p>
+            </li>
+          }
+        </ul>
+      </article>
+    </div>
+  }
+</section>
