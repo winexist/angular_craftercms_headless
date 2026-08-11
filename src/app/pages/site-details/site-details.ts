@@ -1,8 +1,20 @@
+import { isPlatformBrowser, isPlatformServer } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, DestroyRef, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  PLATFORM_ID,
+  TransferState,
+  computed,
+  inject,
+  makeStateKey,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
-import { Subject, catchError, map, of, startWith, switchMap } from 'rxjs';
+import { Subject, catchError, map, of, startWith, switchMap, tap } from 'rxjs';
+import { SITE_DETAILS_API_URL } from '../../tokens';
 
 type ItemCollection<T> = {
   item?: T | T[];
@@ -39,7 +51,7 @@ type SiteDetailsResponse = {
   };
 };
 
-const LOCAL_PROXY_API_URL = '/api/site-details';
+const SITE_DETAILS_STATE_KEY = makeStateKey<SiteDetailsResponse>('siteDetails');
 
 function toArray<T>(collection: ItemCollection<T> | undefined): T[] {
   if (!collection?.item) {
@@ -60,6 +72,9 @@ export class SiteDetails implements OnInit {
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly transferState = inject(TransferState);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly apiUrl = inject(SITE_DETAILS_API_URL);
   private readonly reloadTrigger$ = new Subject<void>();
 
   protected readonly isLoading = signal(false);
@@ -80,11 +95,30 @@ export class SiteDetails implements OnInit {
 
   ngOnInit(): void {
     this.applySeoDefaults();
-    this.reloadTrigger$
+
+    const cached = isPlatformBrowser(this.platformId)
+      ? this.transferState.get(SITE_DETAILS_STATE_KEY, null)
+      : null;
+
+    if (cached) {
+      this.transferState.remove(SITE_DETAILS_STATE_KEY);
+      this.payload.set(cached);
+      this.applySeoFromData();
+    }
+
+    // When the server already rendered the data, skip the initial client fetch
+    // (that relative call would hit the CrafterCMS preview origin and 404).
+    const trigger$ = cached ? this.reloadTrigger$ : this.reloadTrigger$.pipe(startWith(undefined));
+
+    trigger$
       .pipe(
-        startWith(undefined),
         switchMap(() =>
-          this.http.get<SiteDetailsResponse>(LOCAL_PROXY_API_URL).pipe(
+          this.http.get<SiteDetailsResponse>(this.apiUrl).pipe(
+            tap((response) => {
+              if (isPlatformServer(this.platformId)) {
+                this.transferState.set(SITE_DETAILS_STATE_KEY, response);
+              }
+            }),
             map((response) => ({ state: 'success' as const, response })),
             catchError(() => of({ state: 'error' as const })),
             startWith({ state: 'loading' as const }),
