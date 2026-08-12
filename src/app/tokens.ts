@@ -8,10 +8,3 @@ import { InjectionToken } from '@angular/core';
 export const SITE_DETAILS_API_URL = new InjectionToken<string>('SITE_DETAILS_API_URL', {
   factory: () => '/api/site-details',
 });
-
-/**
- * Absolute (server) or relative (browser) URL used to load Home Details content.
- */
-export const HOME_DETAILS_API_URL = new InjectionToken<string>('HOME_DETAILS_API_URL', {
-  factory: () => '/api/home-details',
-});
