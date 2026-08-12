@@ -8,11 +8,21 @@ import express from 'express';
 import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
-const CONTENT_STORE_PATH = '/api/1/site/content_store/item.json?url=/site/website/index.xml';
-const upstreamBaseUrl = process.env['SITE_DETAILS_UPSTREAM_URL'];
+const HOME_PAGE_PATH = '/site/website/index.xml';
+const SITE_DETAILS_PAGE_PATH = '/site/website/index.xml';
+const crafterSite = process.env['CRAFTER_SITE'] ?? 'headless-empty';
+const upstreamBaseUrl = process.env['CRAFTER_BASE_URL'] ?? 'http://localhost:8080';
+const trustedProxyHeaders = (
+  process.env['TRUST_PROXY_HEADERS'] ?? 'x-forwarded-for,x-forwarded-proto'
+)
+  .split(',')
+  .map((header) => header.trim())
+  .filter(Boolean);
 
 const app = express();
-const angularApp = new AngularNodeAppEngine();
+const angularApp = new AngularNodeAppEngine({
+  trustProxyHeaders: trustedProxyHeaders,
+});
 
 /**
  * Example Express Rest API endpoints can be defined here.
@@ -25,18 +35,44 @@ const angularApp = new AngularNodeAppEngine();
  * });
  * ```
  */
-app.get('/api/site-details', async (_req, res, next) => {
-  if (!upstreamBaseUrl) {
-    res.status(500).send('Missing SITE_DETAILS_UPSTREAM_URL environment variable.');
-    return;
-  }
+const fetchCrafterContent = async (path: string) => {
+  const params = new URLSearchParams({
+    url: path,
+    crafterSite,
+  });
 
+  return fetch(`${upstreamBaseUrl}/api/1/site/content_store/item.json?${params.toString()}`, {
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+};
+
+app.get('/api/site-details', async (_req, res, next) => {
   try {
-    const upstreamResponse = await fetch(`${upstreamBaseUrl}${CONTENT_STORE_PATH}`, {
-      headers: {
-        Accept: 'application/json',
-      },
-    });
+    const upstreamResponse = await fetchCrafterContent(SITE_DETAILS_PAGE_PATH);
+
+    const payload = await upstreamResponse.text();
+
+    if (!upstreamResponse.ok) {
+      res.status(upstreamResponse.status).send(payload);
+      return;
+    }
+
+    res.setHeader(
+      'content-type',
+      upstreamResponse.headers.get('content-type') ?? 'application/json;charset=UTF-8',
+    );
+    res.setHeader('cache-control', 'no-store');
+    res.status(200).send(payload);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/home-details', async (_req, res, next) => {
+  try {
+    const upstreamResponse = await fetchCrafterContent(HOME_PAGE_PATH);
 
     const payload = await upstreamResponse.text();
 

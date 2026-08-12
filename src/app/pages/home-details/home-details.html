@@ -1,0 +1,29 @@
+<section class="home-details" aria-labelledby="home-details-title">
+  <div class="heading-row">
+    <div>
+      <p class="eyebrow">CrafterCMS Home Content</p>
+      <h1 id="home-details-title">Home details</h1>
+      <p class="intro">
+        This page fetches CrafterCMS home content and renders the body_html field with Angular SSR.
+      </p>
+    </div>
+    <button type="button" (click)="reload()">Reload</button>
+  </div>
+
+  @if (isLoading()) {
+    <p class="state">Loading home content from CrafterCMS...</p>
+  } @else if (errorMessage()) {
+    <p class="state error">{{ errorMessage() }}</p>
+  } @else {
+    <article class="content-card" aria-label="Home content body html">
+      <h2>{{ heading() }}</h2>
+      <p class="content-path">Source: {{ pageUrl() }}</p>
+
+      @if (bodyHtml()) {
+        <div class="rich-text" [innerHTML]="bodyHtml()"></div>
+      } @else {
+        <p class="state">No body_html value was found in the CrafterCMS response.</p>
+      }
+    </article>
+  }
+</section>

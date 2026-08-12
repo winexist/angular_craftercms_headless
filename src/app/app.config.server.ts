@@ -2,7 +2,7 @@ import { mergeApplicationConfig, ApplicationConfig } from '@angular/core';
 import { provideServerRendering, withRoutes } from '@angular/ssr';
 import { appConfig } from './app.config';
 import { serverRoutes } from './app.routes.server';
-import { SITE_DETAILS_API_URL } from './tokens';
+import { HOME_DETAILS_API_URL, SITE_DETAILS_API_URL } from './tokens';
 
 const serverPort = process.env['PORT'] ?? '4000';
 
@@ -12,6 +12,10 @@ const serverConfig: ApplicationConfig = {
     {
       provide: SITE_DETAILS_API_URL,
       useValue: `http://localhost:${serverPort}/api/site-details`,
+    },
+    {
+      provide: HOME_DETAILS_API_URL,
+      useValue: `http://localhost:${serverPort}/api/home-details`,
     },
   ],
 };
