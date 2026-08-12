@@ -157,9 +157,9 @@ export class SiteDetails implements OnInit {
     if (isPlatformBrowser(this.platformId)) {
       const preferredSite = this.getPreviewSiteFromContext() || this.defaultCrafterSite;
       if (preferredSite) {
-        return this.http.get<SiteDetailsResponse>(this.buildCrafterContentUrl(preferredSite)).pipe(
-          catchError(() => this.http.get<SiteDetailsResponse>(this.apiUrl)),
-        );
+        return this.http
+          .get<SiteDetailsResponse>(this.buildCrafterContentUrl(preferredSite))
+          .pipe(catchError(() => this.http.get<SiteDetailsResponse>(this.apiUrl)));
       }
 
       return this.http.get<SiteDetailsResponse>(this.apiUrl);

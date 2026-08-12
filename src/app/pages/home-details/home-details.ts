@@ -120,9 +120,9 @@ export class HomeDetails implements OnInit {
     if (isPlatformBrowser(this.platformId)) {
       const preferredSite = this.getPreviewSiteFromContext() || this.defaultCrafterSite;
       if (preferredSite) {
-        return this.http.get<HomeDetailsResponse>(this.buildCrafterContentUrl(preferredSite)).pipe(
-          catchError(() => this.http.get<HomeDetailsResponse>(this.apiUrl)),
-        );
+        return this.http
+          .get<HomeDetailsResponse>(this.buildCrafterContentUrl(preferredSite))
+          .pipe(catchError(() => this.http.get<HomeDetailsResponse>(this.apiUrl)));
       }
 
       return this.http.get<HomeDetailsResponse>(this.apiUrl);
