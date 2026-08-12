@@ -3,122 +3,85 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   DestroyRef,
+  OnInit,
   PLATFORM_ID,
   TransferState,
   computed,
   inject,
   makeStateKey,
-  OnInit,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
 import { Subject, catchError, map, of, startWith, switchMap, tap } from 'rxjs';
-import { SITE_DETAILS_API_URL } from '../../tokens';
+import { HOME_DETAILS_API_URL } from '../../tokens';
 
-type ItemCollection<T> = {
-  item?: T | T[];
-};
-
-type SectionItem = {
-  title_s?: string | null;
-  targetURL_s?: string | null;
-  content_html?: string | null;
-  image_s?: string | null;
-};
-
-type CarouselItem = {
-  title_s?: string | null;
-  webImage_s?: string | null;
-  mobileImage_s?: string | null;
-  mapping_s?: string | null;
-  delay_i?: string | null;
-};
-
-type PageData = {
+type CrafterPage = {
+  title_t?: string | null;
+  body_html?: string | null;
   'internal-name'?: string | null;
-  lastModifiedDate?: string | null;
-  ourCompany_o?: ItemCollection<SectionItem>;
-  ourPlatforms_o?: ItemCollection<SectionItem>;
-  carousel_o?: ItemCollection<CarouselItem>;
 };
 
-type SiteDetailsResponse = {
-  name?: string;
+type HomeDetailsResponse = {
   url?: string;
   descriptorDom?: {
-    page?: PageData;
+    page?: CrafterPage;
   };
 };
 
-const SITE_DETAILS_STATE_KEY = makeStateKey<SiteDetailsResponse>('siteDetails');
-const CRAFTER_SITE_DETAILS_FALLBACK_URL =
-  '/api/1/site/content_store/item.json?url=/site/website/index.xml&crafterSite=fgen-corporate';
-
-function toArray<T>(collection: ItemCollection<T> | undefined): T[] {
-  if (!collection?.item) {
-    return [];
-  }
-
-  return Array.isArray(collection.item) ? collection.item : [collection.item];
-}
+const HOME_DETAILS_STATE_KEY = makeStateKey<HomeDetailsResponse>('homeDetails');
+const CRAFTER_HOME_DETAILS_FALLBACK_URL =
+  '/api/1/site/content_store/item.json?url=/site/website/index.xml&crafterSite=headless-empty';
 
 @Component({
-  selector: 'app-site-details',
+  selector: 'app-home-details',
   imports: [],
-  templateUrl: './site-details.html',
-  styleUrl: './site-details.css',
+  templateUrl: './home-details.html',
+  styleUrl: './home-details.css',
 })
-export class SiteDetails implements OnInit {
+export class HomeDetails implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
   private readonly destroyRef = inject(DestroyRef);
   private readonly transferState = inject(TransferState);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly apiUrl = inject(SITE_DETAILS_API_URL);
+  private readonly apiUrl = inject(HOME_DETAILS_API_URL);
   private readonly reloadTrigger$ = new Subject<void>();
 
   protected readonly isLoading = signal(false);
   protected readonly errorMessage = signal('');
-  protected readonly payload = signal<SiteDetailsResponse | null>(null);
+  protected readonly payload = signal<HomeDetailsResponse | null>(null);
 
   protected readonly page = computed(() => this.payload()?.descriptorDom?.page ?? null);
-  protected readonly pageName = computed(() => this.payload()?.name ?? 'index.xml');
   protected readonly pageUrl = computed(() => this.payload()?.url ?? '/site/website/index.xml');
-  protected readonly internalName = computed(() => this.page()?.['internal-name'] ?? 'Home');
-  protected readonly lastUpdated = computed(() => this.page()?.lastModifiedDate ?? 'Unavailable');
-  protected readonly companyItems = computed(() => toArray(this.page()?.ourCompany_o).slice(0, 4));
-  protected readonly platformItems = computed(() =>
-    toArray(this.page()?.ourPlatforms_o).slice(0, 5),
+  protected readonly heading = computed(
+    () => this.page()?.title_t ?? this.page()?.['internal-name'] ?? 'Home page',
   );
-  protected readonly carouselItems = computed(() => toArray(this.page()?.carousel_o));
-  protected readonly carouselCount = computed(() => this.carouselItems().length);
+  protected readonly bodyHtml = computed(() => this.page()?.body_html ?? '');
 
   ngOnInit(): void {
     this.applySeoDefaults();
 
     const cached = isPlatformBrowser(this.platformId)
-      ? this.transferState.get(SITE_DETAILS_STATE_KEY, null)
+      ? this.transferState.get(HOME_DETAILS_STATE_KEY, null)
       : null;
 
     if (cached) {
-      this.transferState.remove(SITE_DETAILS_STATE_KEY);
+      this.transferState.remove(HOME_DETAILS_STATE_KEY);
       this.payload.set(cached);
       this.applySeoFromData();
     }
 
-    // When the server already rendered the data, skip the initial client fetch
-    // (that relative call would hit the CrafterCMS preview origin and 404).
     const trigger$ = cached ? this.reloadTrigger$ : this.reloadTrigger$.pipe(startWith(undefined));
 
     trigger$
       .pipe(
         switchMap(() =>
-          this.fetchSiteDetails().pipe(
+          this.fetchHomeDetails().pipe(
             tap((response) => {
               if (isPlatformServer(this.platformId)) {
-                this.transferState.set(SITE_DETAILS_STATE_KEY, response);
+                this.transferState.set(HOME_DETAILS_STATE_KEY, response);
               }
             }),
             map((response) => ({ state: 'success' as const, response })),
@@ -143,8 +106,8 @@ export class SiteDetails implements OnInit {
           return;
         }
 
-        this.errorMessage.set('Unable to load API data right now. Please try again in a moment.');
         this.payload.set(null);
+        this.errorMessage.set('Unable to load CrafterCMS home content right now.');
         this.applySeoErrorState();
       });
   }
@@ -153,11 +116,11 @@ export class SiteDetails implements OnInit {
     this.reloadTrigger$.next();
   }
 
-  private fetchSiteDetails() {
-    return this.http.get<SiteDetailsResponse>(this.apiUrl).pipe(
+  private fetchHomeDetails() {
+    return this.http.get<HomeDetailsResponse>(this.apiUrl).pipe(
       catchError((error: HttpErrorResponse) => {
         if (isPlatformBrowser(this.platformId) && error.status === 404) {
-          return this.http.get<SiteDetailsResponse>(CRAFTER_SITE_DETAILS_FALLBACK_URL);
+          return this.http.get<HomeDetailsResponse>(CRAFTER_HOME_DETAILS_FALLBACK_URL);
         }
 
         throw error;
@@ -166,28 +129,27 @@ export class SiteDetails implements OnInit {
   }
 
   private applySeoDefaults(): void {
-    const title = 'Site Details | Northstar Studio';
+    const title = 'Home Details | Northstar Studio';
     const description =
-      'Live SSR-rendered page that shows structured details from CrafterCMS content API.';
+      'SSR-rendered CrafterCMS home page content with body_html extracted from the content API.';
 
     this.title.setTitle(title);
     this.updateMetaTags(title, description);
   }
 
   private applySeoFromData(): void {
-    const section = this.internalName();
-    const carouselCount = this.carouselCount();
-    const title = `${section} API Details | Northstar Studio`;
-    const description = `SSR view of /site/website/index.xml with ${carouselCount} carousel items and curated section summaries.`;
+    const pageTitle = this.heading();
+    const title = `${pageTitle} | Northstar Studio`;
+    const description = `SSR content preview for ${this.pageUrl()} from CrafterCMS.`;
 
     this.title.setTitle(title);
     this.updateMetaTags(title, description);
   }
 
   private applySeoErrorState(): void {
-    const title = 'Site Details Unavailable | Northstar Studio';
+    const title = 'Home Details Unavailable | Northstar Studio';
     const description =
-      'The API-backed site details page is temporarily unavailable. Please try again shortly.';
+      'CrafterCMS home content is temporarily unavailable. Please refresh and try again.';
 
     this.title.setTitle(title);
     this.updateMetaTags(title, description);

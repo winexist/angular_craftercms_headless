@@ -1,0 +1,79 @@
+.home-details {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.heading-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1rem;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #8ec5ff 80%, #ffffff 20%);
+}
+
+h1 {
+  margin: 0.35rem 0 0.7rem;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  line-height: 1.15;
+}
+
+.intro {
+  margin: 0;
+  max-width: 65ch;
+  color: color-mix(in srgb, #ffffff 85%, #8aa4c4 15%);
+}
+
+button {
+  border: 1px solid color-mix(in srgb, #83b9ff 75%, #d9ecff 25%);
+  border-radius: 999px;
+  background: transparent;
+  color: #eaf2ff;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+
+button:hover,
+button:focus-visible {
+  background: color-mix(in srgb, #83b9ff 28%, transparent 72%);
+}
+
+.content-card {
+  border: 1px solid color-mix(in srgb, #89b6ff 18%, transparent 82%);
+  border-radius: 1rem;
+  background: color-mix(in srgb, #10253e 76%, #0a1524 24%);
+  padding: clamp(1rem, 2.3vw, 1.5rem);
+}
+
+.content-card h2 {
+  margin: 0;
+  font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+}
+
+.content-path {
+  margin: 0.55rem 0 1rem;
+  font-size: 0.85rem;
+  color: color-mix(in srgb, #ffffff 60%, #8aa4c4 40%);
+  word-break: break-word;
+}
+
+.rich-text {
+  line-height: 1.7;
+}
+
+.state {
+  margin: 0;
+  color: #d5e5ff;
+}
+
+.state.error {
+  color: #ffb7c1;
+}
