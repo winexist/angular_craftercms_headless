@@ -10,7 +10,7 @@ import { join } from 'node:path';
 const browserDistFolder = join(import.meta.dirname, '../browser');
 const HOME_PAGE_PATH = '/site/website/index.xml';
 const SITE_DETAILS_PAGE_PATH = '/site/website/index.xml';
-const crafterSite = process.env['CRAFTER_SITE'] ?? 'headless-empty';
+const crafterSite = process.env['CRAFTER_SITE'] ?? '';
 const upstreamBaseUrl =
   process.env['CRAFTER_BASE_URL'] ??
   process.env['SITE_DETAILS_UPSTREAM_URL'] ??
@@ -30,8 +30,11 @@ const angularApp = new AngularNodeAppEngine({
 const fetchCrafterContent = async (path: string) => {
   const params = new URLSearchParams({
     url: path,
-    crafterSite,
   });
+
+  if (crafterSite) {
+    params.set('crafterSite', crafterSite);
+  }
 
   return fetch(`${upstreamBaseUrl}/api/1/site/content_store/item.json?${params.toString()}`, {
     headers: {

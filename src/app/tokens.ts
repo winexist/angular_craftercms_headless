@@ -15,3 +15,10 @@ export const SITE_DETAILS_API_URL = new InjectionToken<string>('SITE_DETAILS_API
 export const HOME_DETAILS_API_URL = new InjectionToken<string>('HOME_DETAILS_API_URL', {
   factory: () => '/api/home-details',
 });
+
+/**
+ * Default Crafter site used by browser-side direct content_store calls.
+ */
+export const CRAFTER_SITE_NAME = new InjectionToken<string>('CRAFTER_SITE_NAME', {
+  factory: () => '',
+});

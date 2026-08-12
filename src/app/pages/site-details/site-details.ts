@@ -14,7 +14,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
 import { Subject, catchError, map, of, startWith, switchMap, tap } from 'rxjs';
-import { SITE_DETAILS_API_URL } from '../../tokens';
+import { CRAFTER_SITE_NAME, SITE_DETAILS_API_URL } from '../../tokens';
 
 type ItemCollection<T> = {
   item?: T | T[];
@@ -52,8 +52,7 @@ type SiteDetailsResponse = {
 };
 
 const SITE_DETAILS_STATE_KEY = makeStateKey<SiteDetailsResponse>('siteDetails');
-const CRAFTER_SITE_DETAILS_FALLBACK_URL =
-  '/api/1/site/content_store/item.json?url=/site/website/index.xml&crafterSite=fgen-corporate';
+const CONTENT_PATH = '/site/website/index.xml';
 
 function toArray<T>(collection: ItemCollection<T> | undefined): T[] {
   if (!collection?.item) {
@@ -77,6 +76,7 @@ export class SiteDetails implements OnInit {
   private readonly transferState = inject(TransferState);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly apiUrl = inject(SITE_DETAILS_API_URL);
+  private readonly defaultCrafterSite = inject(CRAFTER_SITE_NAME);
   private readonly reloadTrigger$ = new Subject<void>();
 
   protected readonly isLoading = signal(false);
@@ -154,15 +154,82 @@ export class SiteDetails implements OnInit {
   }
 
   private fetchSiteDetails() {
+    if (isPlatformBrowser(this.platformId)) {
+      const preferredSite = this.getPreviewSiteFromContext() || this.defaultCrafterSite;
+      if (preferredSite) {
+        return this.http.get<SiteDetailsResponse>(this.buildCrafterContentUrl(preferredSite)).pipe(
+          catchError(() => this.http.get<SiteDetailsResponse>(this.apiUrl)),
+        );
+      }
+
+      return this.http.get<SiteDetailsResponse>(this.apiUrl);
+    }
+
     return this.http.get<SiteDetailsResponse>(this.apiUrl).pipe(
       catchError((error: HttpErrorResponse) => {
         if (isPlatformBrowser(this.platformId) && error.status === 404) {
-          return this.http.get<SiteDetailsResponse>(CRAFTER_SITE_DETAILS_FALLBACK_URL);
+          return this.http.get<SiteDetailsResponse>(
+            this.buildCrafterContentUrl(this.defaultCrafterSite),
+          );
         }
 
         throw error;
       }),
     );
+  }
+
+  private getPreviewSiteFromContext(): string {
+    const currentSite = this.readSiteFromLocation(globalThis.location);
+    if (currentSite) {
+      return currentSite;
+    }
+
+    try {
+      if (globalThis.top && globalThis.top !== globalThis.window && globalThis.top.location) {
+        return this.readSiteFromLocation(globalThis.top.location);
+      }
+    } catch {
+      // Ignore cross-origin access errors.
+    }
+
+    const referrer = globalThis.document.referrer;
+    if (referrer) {
+      const fromReferrer = this.readSiteFromUrlString(referrer);
+      if (fromReferrer) {
+        return fromReferrer;
+      }
+    }
+
+    return '';
+  }
+
+  private readSiteFromUrlString(urlString: string): string {
+    try {
+      const parsedUrl = new URL(urlString);
+      return this.readSiteFromLocation(parsedUrl as unknown as Location);
+    } catch {
+      return '';
+    }
+  }
+
+  private readSiteFromLocation(locationRef: Location): string {
+    const fromSearch = new URLSearchParams(locationRef.search).get('site')?.trim() ?? '';
+    if (fromSearch) {
+      return fromSearch;
+    }
+
+    const hash = locationRef.hash;
+    const hashQuery = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : '';
+    return new URLSearchParams(hashQuery).get('site')?.trim() ?? '';
+  }
+
+  private buildCrafterContentUrl(site: string): string {
+    const params = new URLSearchParams({
+      url: CONTENT_PATH,
+      crafterSite: site,
+    });
+
+    return `/api/1/site/content_store/item.json?${params.toString()}`;
   }
 
   private applySeoDefaults(): void {
